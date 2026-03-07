@@ -1,7 +1,7 @@
 /**
  * EcoScan Popup Script
  * Handles the popup UI: scanning, score animation, accordion panels,
- * and rendering the full sustainability report.
+ * feedback form, and rendering the full sustainability report.
  */
 
 // ──────────────────────────────────────────
@@ -23,6 +23,17 @@ const productName = document.getElementById("product-name");
 const productBrand = document.getElementById("product-brand");
 const categoriesContainer = document.getElementById("categories");
 
+// Brand Reputation elements
+const brandSection = document.getElementById("brand-section");
+const brandOverallGrade = document.getElementById("brand-overall-grade");
+const brandStatsGrid = document.getElementById("brand-stats-grid");
+const brandProductsCount = document.getElementById("brand-products-count");
+
+// Alternatives elements
+const alternativesSection = document.getElementById("alternatives-section");
+const alternativesList = document.getElementById("alternatives-list");
+const altsCount = document.getElementById("alts-count");
+
 // Material & Certification elements
 const materialsList = document.getElementById("materials-list");
 const certsList = document.getElementById("certs-list");
@@ -37,10 +48,23 @@ const gwrPenalty = document.getElementById("gwr-penalty");
 const gwrFlagged = document.getElementById("gwr-flagged");
 const gwrUnsupported = document.getElementById("gwr-unsupported");
 
+// Feedback elements
+const feedbackToggle = document.getElementById("feedback-toggle");
+const feedbackBtn = document.getElementById("feedback-btn");
+const feedbackForm = document.getElementById("feedback-form");
+const feedbackType = document.getElementById("feedback-type");
+const feedbackText = document.getElementById("feedback-text");
+const feedbackCancel = document.getElementById("feedback-cancel");
+const feedbackSubmit = document.getElementById("feedback-submit");
+const feedbackSuccess = document.getElementById("feedback-success");
+
 // Loading steps
 const stepExtract = document.getElementById("step-extract");
 const stepAnalyze = document.getElementById("step-analyze");
 const stepScore = document.getElementById("step-score");
+
+// Track current analysis for feedback context
+let currentAnalysis = null;
 
 // ──────────────────────────────────────────
 // UI State Management
@@ -135,7 +159,6 @@ function animateCounter(element, target, duration = 1200) {
     function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // Ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3);
         const current = Math.round(start + (target - start) * eased);
         element.textContent = current;
@@ -155,11 +178,9 @@ function renderScoreRing(finalScore, grade) {
     const circumference = 2 * Math.PI * 52;
     const offset = circumference - (finalScore / 100) * circumference;
 
-    // Update gradient colors
     document.getElementById("grad-stop-1").setAttribute("stop-color", gradStart);
     document.getElementById("grad-stop-2").setAttribute("stop-color", gradEnd);
 
-    // Reset and animate the circle
     scoreCircle.style.strokeDasharray = circumference;
     scoreCircle.style.strokeDashoffset = circumference;
 
@@ -167,16 +188,13 @@ function renderScoreRing(finalScore, grade) {
         scoreCircle.style.strokeDashoffset = offset;
     });
 
-    // Animate the number
     animateCounter(scoreValue, Math.round(finalScore));
     scoreValue.style.color = color;
 
-    // Update grade badge
     scoreGrade.textContent = grade;
-    scoreGrade.style.background = `${color}1F`; // 12% opacity
+    scoreGrade.style.background = `${color}1F`;
     scoreGrade.style.color = color;
 
-    // Update label
     scoreLabel.textContent = getScoreLabel(finalScore);
     scoreLabel.style.color = color;
 }
@@ -207,7 +225,6 @@ function renderCategories(categoryScores) {
     `;
         categoriesContainer.appendChild(card);
 
-        // Animate progress bar
         requestAnimationFrame(() => {
             const fill = card.querySelector(".progress-fill");
             fill.style.width = `${pct}%`;
@@ -255,7 +272,6 @@ function renderCertifications(certifications) {
     }
 
     certsCount.textContent = certifications.length.toString();
-    const thirdPartyCount = certifications.filter((c) => c.is_third_party).length;
 
     certifications.forEach((cert) => {
         const iconClass = cert.is_third_party ? "third-party" : "brand-internal";
@@ -284,16 +300,13 @@ function renderGWR(greenwashingReport) {
     const gwr = greenwashingReport;
     const riskLevel = gwr.risk_level || "medium";
 
-    // Badge
     gwrLevelBadge.textContent = riskLevel.toUpperCase();
     gwrLevelBadge.className = `gwr-badge risk-${riskLevel}`;
 
-    // Stats
     gwrVagueCount.textContent = gwr.vague_claims_count || 0;
     gwrEvidenceCount.textContent = gwr.verifiable_evidence_count || 0;
     gwrIndexValue.textContent = gwr.gwr_index || 0;
 
-    // Penalty
     if (gwr.penalty_percent > 0) {
         gwrPenalty.textContent = `⚠️ Score reduced by ${gwr.penalty_percent}% due to greenwashing risk`;
         gwrPenalty.style.display = "block";
@@ -301,7 +314,6 @@ function renderGWR(greenwashingReport) {
         gwrPenalty.style.display = "none";
     }
 
-    // Flagged terms
     gwrFlagged.innerHTML = "";
     if (gwr.flagged_terms && gwr.flagged_terms.length > 0) {
         gwr.flagged_terms.forEach((term) => {
@@ -318,7 +330,6 @@ function renderGWR(greenwashingReport) {
         gwrFlagged.innerHTML = '<p class="no-flags">✅ No vague claims detected.</p>';
     }
 
-    // Unsupported claims
     gwrUnsupported.innerHTML = "";
     if (gwr.unsupported_claims && gwr.unsupported_claims.length > 0) {
         const unsupportedHeader = document.createElement("p");
@@ -339,9 +350,87 @@ function renderGWR(greenwashingReport) {
 }
 
 // ──────────────────────────────────────────
+// Render Brand Profile
+// ──────────────────────────────────────────
+function renderBrandProfile(brand) {
+    if (!brand) {
+        brandSection.classList.add("hidden");
+        return;
+    }
+
+    brandSection.classList.remove("hidden");
+    brandOverallGrade.textContent = brand.overall_grade || "—";
+    brandProductsCount.textContent = `${brand.total_products_scanned || 0} products analyzed in our community`;
+
+    const color = getScoreColor(brand.average_score);
+    brandOverallGrade.style.background = `${color}1F`;
+    brandOverallGrade.style.color = color;
+
+    brandStatsGrid.innerHTML = `
+        <div class="brand-stat-card">
+            <span class="brand-stat-label">Avg. Score</span>
+            <span class="brand-stat-value" style="color: ${color}">${Math.round(brand.average_score)}/100</span>
+        </div>
+        <div class="brand-stat-card">
+            <span class="brand-stat-label">Risk Level</span>
+            <span class="brand-stat-value">${brand.overall_risk_level.toUpperCase()}</span>
+        </div>
+        <div class="brand-stat-card">
+            <span class="brand-stat-label">Ethical Focus</span>
+            <span class="brand-stat-value">${Math.round(brand.average_ethics_score)}/20</span>
+        </div>
+        <div class="brand-stat-card">
+            <span class="brand-stat-label">Best Finding</span>
+            <span class="brand-stat-value">${Math.round(brand.best_product_score)}/100</span>
+        </div>
+    `;
+}
+
+// ──────────────────────────────────────────
+// Render Alternatives
+// ──────────────────────────────────────────
+function renderAlternatives(alternatives, currentScore) {
+    if (!alternatives || alternatives.length === 0) {
+        alternativesSection.classList.add("hidden");
+        return;
+    }
+
+    alternativesSection.classList.remove("hidden");
+    altsCount.textContent = alternatives.length;
+    alternativesList.innerHTML = "";
+
+    alternatives.forEach((alt) => {
+        const improvement = Math.round(alt.score - currentScore);
+        const item = document.createElement("a");
+        item.href = alt.url;
+        item.target = "_blank";
+        item.className = "alternative-item";
+        item.innerHTML = `
+            <div class="alt-header">
+                <span class="alt-name">${alt.name}</span>
+                <span class="alt-score-badge">${Math.round(alt.score)}</span>
+            </div>
+            <div class="alt-meta">
+                <span class="alt-brand">${alt.brand}</span>
+                ${improvement > 0 ? `<span class="alt-improvement">+${improvement} points better</span>` : ""}
+            </div>
+        `;
+        alternativesList.appendChild(item);
+    });
+}
+
+// ──────────────────────────────────────────
 // Master Render Function
 // ──────────────────────────────────────────
-function renderScore(scoring) {
+function renderScore(result) {
+    console.log("[EcoScan Popup] Starting result render:", result);
+    const { scoring, brand_profile, alternatives } = result;
+
+    if (!scoring) {
+        console.error("[EcoScan Popup] Error: Scoring data is missing from response.");
+        return;
+    }
+
     const {
         final_score,
         grade,
@@ -351,27 +440,45 @@ function renderScore(scoring) {
     } = scoring;
 
     // Product info
-    productName.textContent = llm_analysis.product.name || "Unknown Product";
-    productBrand.textContent = llm_analysis.product.brand
-        ? `by ${llm_analysis.product.brand}`
-        : "";
+    try {
+        productName.textContent = llm_analysis.product.name || "Unknown Product";
+        productBrand.textContent = llm_analysis.product.brand
+            ? `by ${llm_analysis.product.brand}`
+            : "";
+    } catch (e) { console.warn("Render failed: Product Info", e); }
+
+    // Brand Profile
+    try { renderBrandProfile(brand_profile); } catch (e) { console.warn("Render failed: Brand Profile", e); }
 
     // Score ring
-    renderScoreRing(final_score, grade);
+    try { renderScoreRing(final_score, grade); } catch (e) { console.warn("Render failed: Score Ring", e); }
 
     // Category breakdown
-    renderCategories(category_scores);
+    try { renderCategories(category_scores); } catch (e) { console.warn("Render failed: Categories", e); }
 
     // Materials
-    renderMaterials(llm_analysis.materials);
+    try { renderMaterials(llm_analysis.materials); } catch (e) { console.warn("Render failed: Materials", e); }
 
     // Certifications
-    renderCertifications(llm_analysis.certifications);
+    try { renderCertifications(llm_analysis.certifications); } catch (e) { console.warn("Render failed: Certifications", e); }
 
     // Greenwashing report
-    renderGWR(greenwashing_report);
+    try { renderGWR(greenwashing_report); } catch (e) { console.warn("Render failed: Greenwashing", e); }
+
+    // Alternatives
+    try { renderAlternatives(alternatives, final_score); } catch (e) { console.warn("Render failed: Alternatives", e); }
+
+    // Store context for feedback
+    try {
+        currentAnalysis = {
+            product_url: result.product_url || window.location.href,
+            score: final_score,
+        };
+        resetFeedback();
+    } catch (e) { console.warn("Failed to set feedback context", e); }
 
     showState("result");
+    console.log("[EcoScan Popup] Render complete.");
 }
 
 // ──────────────────────────────────────────
@@ -396,46 +503,188 @@ function initAccordions() {
 }
 
 // ──────────────────────────────────────────
-// Scan Action
+// Scan Action (Phase 7: Streaming Support)
 // ──────────────────────────────────────────
+let streamProgressListener = null;
+
 function triggerScan() {
     showState("loading");
-
-    // Step 1: Get product data from content script
     advanceLoadingStep("analyze");
+
+    // Clean up any previous stream listener
+    if (streamProgressListener) {
+        chrome.runtime.onMessage.removeListener(streamProgressListener);
+        streamProgressListener = null;
+    }
 
     chrome.runtime.sendMessage({ action: "GET_PRODUCT_DATA" }, (productData) => {
         if (!productData || !productData.has_data) {
+            console.warn("[EcoScan] Data extraction failed:", productData?.error);
             document.getElementById("error-message").textContent =
-                "No product data found. Visit a product page on a supported site and try again.";
+                productData?.error || "No product data found. Visit a product page on a supported site and try again.";
             showState("error");
             return;
         }
 
-        // Step 2: Send to backend
-        advanceLoadingStep("score");
+        // Set up listener for streaming progress updates
+        streamProgressListener = (message) => {
+            if (message.action === "STREAM_PROGRESS" && message.data) {
+                handleStreamProgress(message.data);
+            }
+        };
+        chrome.runtime.onMessage.addListener(streamProgressListener);
 
+        // Use streaming analysis with batch fallback
         chrome.runtime.sendMessage(
-            { action: "ANALYZE_PRODUCT", data: productData },
+            { action: "ANALYZE_PRODUCT_STREAM", data: productData },
             (result) => {
-                advanceLoadingStep("complete");
+                // Clean up listener
+                if (streamProgressListener) {
+                    chrome.runtime.onMessage.removeListener(streamProgressListener);
+                    streamProgressListener = null;
+                }
 
-                setTimeout(() => {
-                    if (result && result.success) {
-                        renderScore(result.scoring);
-                    } else {
-                        document.getElementById("error-message").textContent =
-                            result?.error || "Analysis failed. Make sure the backend server is running.";
-                        showState("error");
-                    }
-                }, 400);
+                if (result && result.success) {
+                    advanceLoadingStep("complete");
+                    setTimeout(() => renderScore(result), 300);
+                } else if (result && result.error && result.error.includes("Streaming failed")) {
+                    // Fallback to batch mode
+                    console.log("[EcoScan] Streaming failed, falling back to batch mode");
+                    advanceLoadingStep("score");
+                    chrome.runtime.sendMessage(
+                        { action: "ANALYZE_PRODUCT", data: productData },
+                        (batchResult) => {
+                            advanceLoadingStep("complete");
+                            setTimeout(() => {
+                                if (batchResult && batchResult.success) {
+                                    renderScore(batchResult);
+                                } else {
+                                    document.getElementById("error-message").textContent =
+                                        batchResult?.error || "Analysis failed. Make sure the backend server is running.";
+                                    showState("error");
+                                }
+                            }, 400);
+                        }
+                    );
+                } else {
+                    document.getElementById("error-message").textContent =
+                        result?.error || "Analysis failed. Make sure the backend server is running.";
+                    showState("error");
+                }
             }
         );
     });
 }
 
+function handleStreamProgress(event) {
+    const { type, data } = event;
+
+    if (type === "stage") {
+        switch (data.stage) {
+            case "extracting":
+                resetLoadingSteps();
+                stepExtract.classList.add("active");
+                break;
+            case "analyzing":
+                advanceLoadingStep("analyze");
+                break;
+            case "scoring":
+                advanceLoadingStep("score");
+                break;
+            case "complete":
+                advanceLoadingStep("complete");
+                break;
+        }
+        // Update loading title if there's a message
+        const loadingTitle = document.querySelector(".loading-title");
+        if (loadingTitle && data.message) {
+            loadingTitle.textContent = data.message;
+        }
+    } else if (type === "chunk") {
+        // Show live progress indicator (chars received)
+        const loadingTitle = document.querySelector(".loading-title");
+        if (loadingTitle && data.total_length) {
+            loadingTitle.textContent = `Analyzing... (${data.total_length} chars received)`;
+        }
+    }
+}
+
 scanBtn.addEventListener("click", triggerScan);
 retryBtn.addEventListener("click", triggerScan);
+
+// ──────────────────────────────────────────
+// Feedback Logic (3-state: toggle → form → success)
+// ──────────────────────────────────────────
+
+function resetFeedback() {
+    feedbackToggle.classList.remove("hidden");
+    feedbackForm.classList.add("hidden");
+    feedbackSuccess.classList.add("hidden");
+    feedbackText.value = "";
+    feedbackType.selectedIndex = 0;
+    feedbackSubmit.disabled = false;
+    feedbackSubmit.textContent = "Send Feedback";
+}
+
+// State 1 → State 2: Show the form
+feedbackBtn.addEventListener("click", () => {
+    feedbackToggle.classList.add("hidden");
+    feedbackForm.classList.remove("hidden");
+    feedbackText.focus();
+});
+
+// State 2 → State 1: Cancel
+feedbackCancel.addEventListener("click", () => {
+    resetFeedback();
+});
+
+// State 2 → State 3: Submit
+feedbackSubmit.addEventListener("click", () => {
+    const message = feedbackText.value.trim();
+    if (!message) {
+        feedbackText.style.borderColor = "#EF4444";
+        feedbackText.placeholder = "Please describe the issue before sending...";
+        return;
+    }
+    feedbackText.style.borderColor = "";
+
+    if (!currentAnalysis) return;
+
+    feedbackSubmit.disabled = true;
+    feedbackSubmit.textContent = "Sending...";
+
+    const payload = {
+        product_url: currentAnalysis.product_url,
+        feedback_type: feedbackType.value,
+        message: message,
+        expected_score: null,
+        user_id_hash: "anonymous_user",
+    };
+
+    chrome.runtime.sendMessage({ action: "SUBMIT_FEEDBACK", data: payload }, (response) => {
+        if (response && response.success) {
+            // Show success
+            feedbackForm.classList.add("hidden");
+            feedbackSuccess.classList.remove("hidden");
+
+            // Auto-reset after 4 seconds
+            setTimeout(() => {
+                resetFeedback();
+            }, 4000);
+        } else {
+            feedbackSubmit.disabled = false;
+            feedbackSubmit.textContent = "Retry";
+            feedbackText.value = message;
+            // Show inline error
+            const errorMsg = document.createElement("p");
+            errorMsg.className = "feedback-error";
+            errorMsg.textContent = "Failed to send. Check your connection and try again.";
+            if (!feedbackForm.querySelector(".feedback-error")) {
+                feedbackForm.appendChild(errorMsg);
+            }
+        }
+    });
+});
 
 // ──────────────────────────────────────────
 // Initialize

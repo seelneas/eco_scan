@@ -144,6 +144,30 @@
         </div>
       </div>
 
+      <!-- ─── ACCORDION: Brand Reputation ────── -->
+      <div id="brand-section" class="accordion-section hidden">
+        <button class="accordion-trigger" data-target="brand-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" />
+            </svg>
+            <span>Brand Reputation</span>
+          </div>
+          <span id="brand-overall-grade" class="brand-grade-badge">—</span>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="brand-panel" class="accordion-panel">
+          <div class="brand-container">
+            <div id="brand-stats-grid" class="brand-stats-grid"></div>
+            <div class="brand-footer">
+              <span id="brand-products-count" class="brand-meta-text">0 products analyzed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ─── ACCORDION: Category Breakdown ── -->
       <div class="accordion-section">
         <button class="accordion-trigger" data-target="categories-panel">
@@ -240,14 +264,61 @@
         </div>
       </div>
 
-      <!-- Detailed Report Link -->
-      <div class="report-footer">
-        <button id="feedback-btn" class="feedback-button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      <!-- ─── ACCORDION: Better Alternatives ── -->
+      <div id="alternatives-section" class="accordion-section hidden">
+        <button class="accordion-trigger" data-target="alternatives-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+            </svg>
+            <span>Better Alternatives</span>
+          </div>
+          <span id="alts-count" class="accordion-count">0</span>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
           </svg>
-          Report Inaccuracy
         </button>
+        <div id="alternatives-panel" class="accordion-panel expanded">
+          <div id="alternatives-list" class="alternatives-container"></div>
+        </div>
+      </div>
+
+      <!-- ─── FEEDBACK SECTION ─────────────── -->
+      <div class="report-footer">
+        <!-- State 1: Button -->
+        <div id="feedback-toggle" class="feedback-toggle-wrap">
+          <button id="feedback-btn" class="feedback-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            Report Inaccuracy
+          </button>
+        </div>
+
+        <!-- State 2: Form -->
+        <div id="feedback-form" class="feedback-form hidden">
+          <p class="feedback-prompt">What seems wrong with this analysis?</p>
+          <select id="feedback-type" class="feedback-select">
+            <option value="wrong_score">Score seems wrong</option>
+            <option value="incorrect_material">Materials are incorrect</option>
+            <option value="missing_certification">Missing a certification</option>
+            <option value="false_greenwashing_flag">False greenwashing flag</option>
+            <option value="missed_greenwashing">Missed greenwashing</option>
+            <option value="other">Other</option>
+          </select>
+          <textarea id="feedback-text" class="feedback-input" rows="3"
+            placeholder="Tell us more — e.g. the brand actually uses recycled polyester, not virgin..."></textarea>
+          <div class="feedback-actions">
+            <button id="feedback-cancel" class="btn-cancel">Cancel</button>
+            <button id="feedback-submit" class="btn-submit">Send Feedback</button>
+          </div>
+        </div>
+
+        <!-- State 3: Success -->
+        <div id="feedback-success" class="feedback-success hidden">
+          <span class="feedback-success-icon">🌿</span>
+          <p>Thank you! Your feedback helps us improve EcoScan for everyone.</p>
+        </div>
       </div>
     </div>
 
