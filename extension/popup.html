@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoScan – Sustainability Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+
+<body>
+  <div class="popup-container">
+
+    <!-- ─── HEADER ─────────────────────────── -->
+    <header class="header" id="header">
+      <div class="logo">
+        <span class="logo-icon">🌿</span>
+        <div class="logo-text">
+          <h1>EcoScan</h1>
+          <span class="logo-subtitle">Sustainability Insights</span>
+        </div>
+      </div>
+      <span class="version-badge">v0.1</span>
+    </header>
+
+    <!-- ─── SCAN BUTTON ────────────────────── -->
+    <button id="scan-btn" class="scan-button">
+      <svg class="scan-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <span>Scan This Product</span>
+    </button>
+
+    <!-- ─── IDLE STATE ─────────────────────── -->
+    <div id="status" class="status-message">
+      <div class="idle-illustration">
+        <svg viewBox="0 0 80 80" class="idle-icon">
+          <circle cx="40" cy="40" r="35" fill="none" stroke="url(#idleGrad)" stroke-width="2" stroke-dasharray="4 4" />
+          <text x="40" y="46" text-anchor="middle" font-size="28">🛒</text>
+          <defs>
+            <linearGradient id="idleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10B981" />
+              <stop offset="100%" stop-color="#06B6D4" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <p>Visit a product page and click <strong>Scan</strong> to analyze its sustainability profile.</p>
+      <div class="supported-sites">
+        <span class="site-tag">Amazon</span>
+        <span class="site-tag">Walmart</span>
+        <span class="site-tag">Patagonia</span>
+        <span class="site-tag">H&M</span>
+        <span class="site-tag">Zara</span>
+        <span class="site-tag">+ more</span>
+      </div>
+    </div>
+
+    <!-- ─── LOADING STATE ──────────────────── -->
+    <div id="loading" class="loading hidden">
+      <div class="loading-ring">
+        <svg viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="4" />
+          <circle cx="40" cy="40" r="35" fill="none" stroke="url(#loadGrad)" stroke-width="4" stroke-linecap="round"
+            stroke-dasharray="60 160" transform="rotate(-90 40 40)">
+            <animateTransform attributeName="transform" type="rotate" values="-90 40 40;270 40 40" dur="1.2s"
+              repeatCount="indefinite" />
+          </circle>
+          <defs>
+            <linearGradient id="loadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10B981" />
+              <stop offset="100%" stop-color="#06B6D4" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <p class="loading-title">Analyzing Sustainability</p>
+      <div class="loading-steps">
+        <div class="loading-step active" id="step-extract">
+          <span class="step-dot"></span>
+          <span>Extracting product data...</span>
+        </div>
+        <div class="loading-step" id="step-analyze">
+          <span class="step-dot"></span>
+          <span>Running AI analysis...</span>
+        </div>
+        <div class="loading-step" id="step-score">
+          <span class="step-dot"></span>
+          <span>Calculating scores...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ERROR STATE ────────────────────── -->
+    <div id="error" class="error-container hidden">
+      <div class="error-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <p id="error-message" class="error-text">Something went wrong.</p>
+      <button id="retry-btn" class="retry-button">Try Again</button>
+    </div>
+
+    <!-- ─── RESULTS ────────────────────────── -->
+    <div id="result" class="result-container hidden">
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <h2 id="product-name" class="product-title">Product Name</h2>
+        <span id="product-brand" class="product-brand"></span>
+      </div>
+
+      <!-- Score Ring -->
+      <div class="score-section">
+        <div class="score-ring-container">
+          <svg class="score-ring" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" id="grad-stop-1" stop-color="#10B981" />
+                <stop offset="100%" id="grad-stop-2" stop-color="#06B6D4" />
+              </linearGradient>
+            </defs>
+            <circle class="score-ring-bg" cx="60" cy="60" r="52" />
+            <circle id="score-circle" class="score-ring-progress" cx="60" cy="60" r="52" stroke="url(#scoreGradient)"
+              stroke-dasharray="326.726" stroke-dashoffset="326.726" transform="rotate(-90 60 60)" />
+          </svg>
+          <div class="score-text">
+            <span id="score-value" class="score-number">0</span>
+            <span class="score-divider">/100</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <span id="score-grade" class="grade-badge">—</span>
+          <span id="score-label" class="score-quality-label">Analyzing...</span>
+        </div>
+      </div>
+
+      <!-- ─── ACCORDION: Category Breakdown ── -->
+      <div class="accordion-section">
+        <button class="accordion-trigger" data-target="categories-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20V10M18 20V4M6 20v-4" />
+            </svg>
+            <span>Score Breakdown</span>
+          </div>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="categories-panel" class="accordion-panel expanded">
+          <div id="categories" class="categories-container"></div>
+        </div>
+      </div>
+
+      <!-- ─── ACCORDION: Materials ─────────── -->
+      <div class="accordion-section">
+        <button class="accordion-trigger" data-target="materials-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Materials Analysis</span>
+          </div>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="materials-panel" class="accordion-panel">
+          <div id="materials-list" class="materials-container"></div>
+        </div>
+      </div>
+
+      <!-- ─── ACCORDION: Certifications ────── -->
+      <div class="accordion-section">
+        <button class="accordion-trigger" data-target="certs-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span>Certifications</span>
+          </div>
+          <span id="certs-count" class="accordion-count">0</span>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="certs-panel" class="accordion-panel">
+          <div id="certs-list" class="certs-container"></div>
+        </div>
+      </div>
+
+      <!-- ─── ACCORDION: Greenwashing Risk ─── -->
+      <div class="accordion-section gwr-section-wrap">
+        <button class="accordion-trigger" data-target="gwr-panel">
+          <div class="accordion-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>Greenwashing Risk</span>
+          </div>
+          <span id="gwr-level" class="gwr-badge">—</span>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="gwr-panel" class="accordion-panel expanded">
+          <div class="gwr-container">
+            <div class="gwr-stats">
+              <div class="gwr-stat">
+                <span class="gwr-stat-value" id="gwr-vague-count">0</span>
+                <span class="gwr-stat-label">Vague Claims</span>
+              </div>
+              <div class="gwr-stat">
+                <span class="gwr-stat-value" id="gwr-evidence-count">0</span>
+                <span class="gwr-stat-label">Verified Evidence</span>
+              </div>
+              <div class="gwr-stat">
+                <span class="gwr-stat-value" id="gwr-index-value">0</span>
+                <span class="gwr-stat-label">Risk Index</span>
+              </div>
+            </div>
+            <p id="gwr-penalty" class="gwr-penalty-text"></p>
+            <div id="gwr-flagged" class="gwr-flagged-list"></div>
+            <div id="gwr-unsupported" class="gwr-unsupported-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Report Link -->
+      <div class="report-footer">
+        <button id="feedback-btn" class="feedback-button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          </svg>
+          Report Inaccuracy
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── FOOTER ─────────────────────────── -->
+    <footer class="footer">
+      <p>EcoScan &middot; Sustainability Intelligence</p>
+    </footer>
+
+  </div>
+
+  <script type="module" src="src/popup.js"></script>
+</body>
+
+</html>
