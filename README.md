@@ -15,16 +15,19 @@
 - **🧵 Deep Material Analysis**: Tiers materials from "High" (sustainable) to "Low" (harmful) based on environmental impact.
 - **✅ Certification Verification**: Distinguishes between trusted 3rd-party audits (GOTS, Fair Trade) and brand-internal labels.
 - **💎 Glassmorphism UI**: A stunning, modern interface with animated score rings and micro-interactions.
-- **🔍 Platform Support**: High-fidelity extraction for Amazon, Walmart, Patagonia, H&M, Zara, and more.
-- **⚡ Smart Caching**: Instant results for previously analyzed products via local storage caching.
+- **🔍 Platform Support**: High-fidelity extraction for Amazon, Walmart, Patagonia, H&M, Zara, Target, and more.
+- **🌊 Streaming Responses (Phase 7)**: Real-time analysis updates using Server-Sent Events (SSE) for zero-wait UX.
+- **🗄️ Brand Intelligence (Phase 6)**: Persistent brand profiles tracking overall ethical performance across multiple products.
+- **🔒 Privacy First**: Strips PII and tracking parameters automatically; uses one-way hashed anonymous identifiers.
+- **⏱️ Secure API**: In-memory rate limiting and optional API key validation for production deployments.
 
 ---
 
 ## 🎨 Design Aesthetic: White Glassmorphism
 The extension features a high-fidelity "White Glassmorphism" design system, optimized for clarity and premium feel:
-- **Translucent Surfaces**: 70-85% white opacity with 24px background blur.
-- **Animated Counters**: Real-time score animation from 0 to final result.
-- **Micro-Animations**: Smooth accordion transitions and hover effects.
+- **Translucency**: 70-85% white opacity with 24px background blur.
+- **Live Progress**: Real-time loading steps (Extracting → Analyzing → Scoring) during streaming.
+- **Interactive Feedback**: 3-state user feedback system for reporting inaccuracies or model errors.
 
 ---
 
@@ -34,49 +37,50 @@ The extension features a high-fidelity "White Glassmorphism" design system, opti
 eco_scan/
 ├── backend/              # FastAPI + Gemini AI Service
 │   ├── app/
-│   │   ├── api/          # Middlewares & Routes
-│   │   ├── core/         # Prompt Engineering & Data Libraries
-│   │   ├── models/       # Pydantic Schemas & DB
-│   │   └── services/     # Scoring Engine & GWRD Pipeline
+│   │   ├── api/          # Middlewares, Routes & Rate Limiting
+│   │   ├── core/         # Config, Security & Prompt Design
+│   │   ├── models/       # Pydantic Schemas & SQLAlchemy DB
+│   │   └── services/     # Scoring Engine, Brand Service & LLM Streaming
 │   └── requirements.txt
 │
 └── extension/            # Chrome Extension (V3)
-    ├── src/              # background, contentScript, popup JS
-    ├── styles/           # Premium CSS Design System
-    └── manifest.json     # Extension Config
+    ├── src/              # background (SSE), contentScript, popup JS
+    ├── styles/           # Premium Glassmorphism CSS
+    └── manifest.json     # Extension Config with Domain Scoping
 ```
 
 ---
 
 ## 🚀 Installation & Setup
 
-### 1. Backend Service
+### 1. Simple Setup (Shell Script)
+```bash
+chmod +x setup_ecoscan.sh
+./setup_ecoscan.sh
+```
+
+### 2. Manual Backend Setup
 Requires Python 3.10+ and a Gemini API Key.
 
 ```bash
-# Navigate to backend
 cd backend
-
-# Create & activate environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
 # Configure settings
 cp .env.example .env
-# Open .env and add your GEMINI_API_KEY
+# Edit .env with your GEMINI_API_KEY
 
 # Start the server
 uvicorn app.main:app --reload
 ```
 
-### 2. Chrome Extension
+### 3. Load the Extension
 1. Open Chrome and go to `chrome://extensions/`.
-2. Turn on **Developer mode** (top right).
+2. Turn on **Developer mode**.
 3. Click **Load unpacked**.
-4. Select the `extension/` folder in this repository.
+4. Select the `extension/dist` folder (if built) or `extension/` folder in this repository.
 
 ---
 

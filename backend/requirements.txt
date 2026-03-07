@@ -1,21 +1,21 @@
 # --- Core ---
-fastapi==0.115.8
-uvicorn[standard]==0.34.0
-pydantic==2.10.6
-pydantic-settings==2.7.1
-python-dotenv==1.0.1
-httpx==0.28.1
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+httpx
 
 # --- LLM ---
-google-genai==0.3.0
+google-genai
 
 # --- Database & Caching ---
-sqlalchemy==2.0.35
-aiosqlite==0.20.0
-redis==5.0.8
+sqlalchemy
+aiosqlite
+redis
 
 # --- Tools ---
-black==24.8.0
-flake8==7.1.1
-pre-commit==3.8.0
-alembic==1.13.2
+black
+flake8
+pre-commit
+alembic

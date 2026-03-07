@@ -5,6 +5,7 @@ Loads environment variables and provides application-wide settings.
 
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -21,13 +22,19 @@ class Settings(BaseSettings):
     LLM_MAX_TOKENS: int = 4000
 
     # --- Database ---
-    DATABASE_URL: str = "sqlite+aiosqlite:///./ecoscan.db"
+    DATABASE_URL: str = "sqlite:///./ecoscan.db"
 
     # --- Redis (optional caching) ---
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # --- CORS ---
     CORS_ORIGINS: str = "*"
+
+    # --- Phase 7: Security & Rate Limiting ---
+    API_KEYS: list[str] = []  # Empty = no key required (dev mode)
+    RATE_LIMIT_ANALYZE: int = 30  # Max /analyze requests per window
+    RATE_LIMIT_GENERAL: int = 120  # Max general requests per window
+    RATE_LIMIT_WINDOW: int = 60  # Window size in seconds
 
     class Config:
         env_file = ".env"

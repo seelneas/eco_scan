@@ -1,5 +1,5 @@
 """
-EcoScan FastAPI Application
+EcoScan FastAPI Application (Phase 7 — Streaming, Rate Limiting, Privacy)
 Main entry point for the backend server.
 """
 
@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"  📡 Environment: {settings.ENVIRONMENT}")
     logger.info(f"  🤖 LLM Model: {settings.LLM_MODEL}")
     logger.info(f"  🗄️  Database: SQLite (ecoscan.db)")
+    logger.info(f"  🔐 API Keys: {'Configured' if settings.API_KEYS else 'Open (dev mode)'}")
+    logger.info(f"  ⏱️  Rate Limit: {settings.RATE_LIMIT_ANALYZE} analyze / {settings.RATE_LIMIT_WINDOW}s")
+    logger.info(f"  🌊 Streaming: Enabled (SSE)")
     logger.info("=" * 50)
 
     # Ensure database tables exist
@@ -72,7 +75,6 @@ app = FastAPI(
 # ──────────────────────────────────────────
 
 # 1. CORS (must run before everything)
-# Get from settings, default to ["*"] if empty
 raw_origins = settings.CORS_ORIGINS.split(",")
 origins = [o.strip() for o in raw_origins if o.strip()]
 if not origins:
@@ -89,6 +91,7 @@ app.add_middleware(
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
 )
 
 logger.info(f"  🔒 CORS: {origins} (Credentials: {allow_credentials})")
@@ -110,7 +113,9 @@ async def root():
         "docs": "/docs",
         "endpoints": {
             "analyze": "/api/v1/analyze",
+            "analyze_stream": "/api/v1/analyze/stream",
             "feedback": "/api/v1/feedback",
             "health": "/api/v1/health",
+            "brands": "/api/v1/brands",
         },
     }

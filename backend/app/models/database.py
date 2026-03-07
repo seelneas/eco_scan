@@ -97,6 +97,69 @@ class AnalysisLog(Base):
 
 
 # ──────────────────────────────────────────
+# Brand Profile (Phase 6)
+# ──────────────────────────────────────────
+class BrandProfile(Base):
+    """
+    Persistent brand-level ethical ratings.
+    Tracks rolling averages across all scanned products for a brand.
+    """
+    __tablename__ = "brand_profiles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    brand_name_normalized = Column(String(255), unique=True, index=True, nullable=False)
+    brand_name_display = Column(String(255), nullable=False)
+
+    # Rolling averages (updated on every scan)
+    avg_final_score = Column(Float, default=0.0)
+    avg_materials_score = Column(Float, default=0.0)
+    avg_certifications_score = Column(Float, default=0.0)
+    avg_transparency_score = Column(Float, default=0.0)
+    avg_ethics_score = Column(Float, default=0.0)
+    avg_gwr_index = Column(Float, default=0.0)
+
+    # Stats
+    total_products_scanned = Column(Integer, default=0)
+    best_score = Column(Float, default=0.0)
+    worst_score = Column(Float, default=100.0)
+    most_common_grade = Column(String(2), nullable=True)
+
+    # Reputation
+    overall_grade = Column(String(2), nullable=True)
+    risk_level = Column(String(10), default="unknown")  # low, medium, high, unknown
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<BrandProfile(brand={self.brand_name_display}, grade={self.overall_grade}, products={self.total_products_scanned})>"
+
+
+# ──────────────────────────────────────────
+# Product Category Tags (Phase 6)
+# ──────────────────────────────────────────
+class ProductCategory(Base):
+    """
+    Stores category tags for analyzed products.
+    Powers the Alternative Product Engine by enabling same-category lookups.
+    """
+    __tablename__ = "product_categories"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    product_url_hash = Column(String(64), index=True, nullable=False)
+    product_name = Column(String(500), nullable=True)
+    brand_name = Column(String(255), nullable=True)
+    category = Column(String(100), index=True, nullable=False)  # e.g., "dresses", "t-shirts"
+    final_score = Column(Float, nullable=True)
+    grade = Column(String(2), nullable=True)
+    product_url = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f"<ProductCategory(name={self.product_name}, category={self.category}, score={self.final_score})>"
+
+
+# ──────────────────────────────────────────
 # Database Engine & Session Factory
 # ──────────────────────────────────────────
 def get_engine(database_url: str = "sqlite:///./ecoscan.db"):

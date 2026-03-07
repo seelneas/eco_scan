@@ -43,6 +43,7 @@ class FeedbackType(str, Enum):
     WRONG_SCORE = "wrong_score"
     FALSE_GREENWASHING_FLAG = "false_greenwashing_flag"
     MISSED_GREENWASHING = "missed_greenwashing"
+    TECHNICAL_ERROR = "technical_error"
     OTHER = "other"
 
 
@@ -59,6 +60,7 @@ class ProductAnalysisRequest(BaseModel):
         max_length=15000,
     )
     brand_name: Optional[str] = Field(None, description="Brand name if extracted separately")
+    user_id_hash: Optional[str] = Field(None, description="Anonymized user identifier")
 
 
 class FeedbackRequest(BaseModel):
@@ -94,7 +96,7 @@ class ProductInfo(BaseModel):
 class MaterialEntry(BaseModel):
     name: str
     percentage: Optional[int] = None
-    impact_tier: ImpactTier
+    impact_tier: ImpactTier = ImpactTier.MEDIUM
 
 
 class CertificationEntry(BaseModel):
@@ -113,7 +115,7 @@ class VagueBuzzword(BaseModel):
     word: str
     context: str
     reason: str
-    greenwashing_risk: GreenwashingRisk
+    greenwashing_risk: GreenwashingRisk = GreenwashingRisk.MEDIUM
 
 
 class SustainabilityClaims(BaseModel):
@@ -200,6 +202,8 @@ class ProductAnalysisResponse(BaseModel):
     product_url: str
     scoring: Optional[ScoringResult] = None
     metadata: Optional[AnalysisMetadata] = None
+    brand_profile: Optional["BrandProfileResponse"] = None
+    alternatives: list["AlternativeProduct"] = []
     error: Optional[str] = None
 
 
@@ -220,3 +224,42 @@ class HealthResponse(BaseModel):
     uptime_seconds: float
     total_analyses: int
     total_feedbacks: int
+
+
+# ──────────────────────────────────────────
+# Phase 6: Brand & Alternatives Schemas
+# ──────────────────────────────────────────
+class BrandProfileResponse(BaseModel):
+    """Brand-level ethical profile returned in API responses."""
+    brand_name: str
+    avg_final_score: float
+    avg_materials_score: float
+    avg_certifications_score: float
+    avg_transparency_score: float
+    avg_ethics_score: float
+    avg_gwr_index: float
+    total_products_scanned: int
+    best_score: float
+    worst_score: float
+    overall_grade: Optional[str] = None
+    most_common_grade: Optional[str] = None
+    risk_level: str = "unknown"
+
+
+class AlternativeProduct(BaseModel):
+    """A higher-scoring product suggested as an alternative."""
+    product_name: str
+    brand: Optional[str] = None
+    score: float
+    grade: str
+    category: str
+    product_url: str
+    score_improvement: float
+
+
+class BrandListResponse(BaseModel):
+    """Response for listing all tracked brands."""
+    success: bool
+    total_brands: int
+    brands: list[BrandProfileResponse]
+
