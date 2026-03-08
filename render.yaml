@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ecoscan-api
+    plan: free # Change to 'starter' if you need a persistent disk/no sleeping
+    runtime: docker
+    dockerContext: ./backend # Tell Render to look in the backend folder
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        value: sqlite:///./ecoscan.db # Note: Free tier disks are NOT persistent
+      - key: GEMINI_API_KEY
+        sync: false # You will set this manually in the dashboard for security
+      - key: WIKIRATE_API_KEY
+        sync: false # Set manually in dashboard
