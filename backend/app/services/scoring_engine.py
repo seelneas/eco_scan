@@ -139,8 +139,8 @@ def calculate_certifications_score(analysis: LLMAnalysisResult) -> CategoryScore
             total_points += 2
             recognized.append(f"⚪ {cert.name} [UNRANKED] (+2pts)")
 
-    # Scale: 20 pts = 100 score (2 Gold certs = perfect)
-    score = min(100, (total_points / 20) * 100)
+    # Scale: 10 pts = 100 score (1 Gold cert = 100, or 2 Silvers = 100)
+    score = min(100, (total_points / 10) * 100)
 
     detail_parts = recognized.copy()
     if brand_internal:
@@ -208,6 +208,11 @@ def calculate_transparency_score(analysis: LLMAnalysisResult) -> CategoryScore:
         detail_parts.append("📊 Full material composition disclosed")
 
     score = min(100, score)
+    
+    # Flexibility Bonus: Give +20 base score if at least some transparency exists
+    if score > 0:
+        score = min(100, score + 10)
+
     details = "; ".join(detail_parts) if detail_parts else "No supply chain information disclosed."
 
     return CategoryScore(
@@ -287,35 +292,61 @@ def determine_grade(score: float) -> str:
 
 
 # ──────────────────────────────────────────
-# Master Scoring Function
+# Master Scoring Function (Integrated with Wikirate)
 # ──────────────────────────────────────────
-def compute_ecoscan_score(
+async def compute_ecoscan_score(
     analysis: LLMAnalysisResult,
     raw_product_text: str = "",
 ) -> ScoringResult:
     """
     The master scoring function. Implements the HYBRID REASONING approach:
-    1. LLM has already extracted structured data points.
-    2. This function applies DETERMINISTIC logic to compute consistent scores.
-    3. The GWRD system runs the full regex + LLM hybrid to detect greenwashing.
-    4. The GWR penalty ensures that marketing language is actively penalized.
-
-    Pipeline: Category Scores → Weighted Sum → GWRD Pipeline → GWR Penalty → Final Score → Grade
+    1. LLM has already extracted structured data points from product page.
+    2. WIKIRATE: Fetches real-world corporate sustainability data to ground the score.
+    3. DETERMINISTIC Logic: Applies consistent weighting.
     """
+    from app.services.wikirate_service import wikirate
+
+    brand_name = analysis.product.brand
     logger.info(
-        f"Computing score for '{analysis.product.name}' "
-        f"(brand: {analysis.product.brand or 'N/A'})"
+        f"Computing score for '{analysis.product.name}' (brand: {brand_name or 'N/A'})"
     )
 
-    # 1. Calculate individual category scores (each on 0-100 scale)
+    # 1. Calculate baseline scores from product-page claims
     materials = calculate_materials_score(analysis)
     certifications = calculate_certifications_score(analysis)
     transparency = calculate_transparency_score(analysis)
     ethics = calculate_ethics_score(analysis)
 
+    # 2. Integrate Wikirate (Brand Truth)
+    if brand_name:
+        profile = await wikirate.fetch_sustainability_profile(brand_name)
+        if profile.get("found"):
+            logger.info(f"Wikirate found for {brand_name}: {list(profile['metrics'].keys())}")
+            
+            # Base boost for just being a recognized brand in WikiRate (transparency signal)
+            transparency.score = min(100, transparency.score + 15)
+            transparency.details += "; [Wikirate] Brand has a verified corporate transparency profile"
+            # --- Override Transparency with Wikirate Data ---
+            if "transparency" in profile["metrics"]:
+                wr_score = float(profile["metrics"]["transparency"]["value"] or 0)
+                transparency.score = wr_score
+                transparency.details += f"; [Wikirate] Brand verified in Fashion Transparency Index (Score: {wr_score}%)"
+
+            # --- Boost Ethics if Greenhouse Gas data is disclosed ---
+            if "emissions" in profile["metrics"]:
+                val = profile["metrics"]["emissions"]["value"]
+                if val:
+                    ethics.score = min(100, ethics.score + 15)
+                    ethics.details += f"; [Wikirate] Brand verified Greenhouse Gas disclosures for {profile['metrics']['emissions']['year']}"
+
+            # --- Boost All if GRI reporting is verified ---
+            if "gri" in profile["metrics"] and str(profile["metrics"]["gri"]["value"]).lower() in ["yes", "true", "1"]:
+                ethics.score = min(100, ethics.score + 10)
+                ethics.details += "; [Wikirate] Brand follows GRI Reporting Standards"
+
     category_scores = [materials, certifications, transparency, ethics]
 
-    # 2. Calculate weighted base score
+    # 3. Calculate weighted base score
     base_score = (
         materials.score * WEIGHTS["materials"]
         + certifications.score * WEIGHTS["certifications"]
@@ -323,19 +354,19 @@ def compute_ecoscan_score(
         + ethics.score * WEIGHTS["ethics"]
     )
 
-    # 3. Run the full GWRD pipeline (regex + LLM hybrid)
+    # 4. Run the full GWRD pipeline (regex + LLM hybrid)
     gwrd_result = run_greenwashing_detection(
         raw_product_text=raw_product_text,
         llm_analysis=analysis,
     )
     gwr_report = gwrd_result["greenwashing_report"]
 
-    # 4. Apply GWR penalty
+    # 5. Apply GWR penalty
     penalty_factor = gwr_report.penalty_percent / 100
     final_score = base_score * (1 - penalty_factor)
     final_score = round(max(0, min(100, final_score)), 1)
 
-    # 5. Determine grade
+    # 6. Determine grade
     grade = determine_grade(final_score)
 
     logger.info(

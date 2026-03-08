@@ -1,25 +1,29 @@
 # 🌿 EcoScan
-### AI-Powered Sustainability Intelligence & Greenwashing Detection
+### Evidence-Based Sustainability Intelligence & Greenwashing Detection
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
+[![WikiRate](https://img.shields.io/badge/WikiRate_Verified-FF6B6B?style=for-the-badge&logo=wikipedia&logoColor=white)](https://wikirate.org/)
 
-**EcoScan** is a premium Chrome extension that seamlessly embeds sustainability intelligence into your shopping experience. It uses advanced LLM logic to audit product claims, verify certifications, and provide a transparency-driven "EcoScore."
+**EcoScan** is a premium Chrome extension that turns every shopper into an environmental auditor. Unlike static rating apps, EcoScan uses a **Hybrid Reality** engine: combining real-time AI product analysis with community-verified ESG data from **WikiRate.org**.
+
+---
+
+## 💎 The Unique Value (UVP)
+**"We don't just tell you what's good; we warn you when you're being lied to."** 
+EcoScan's core innovation is its **Active Deception Defense**. It doesn't just parse data; it deducts points for manipulative marketing, "grounds" AI claims with real-world corporate data, and summarizes everything in simple, "people-first" language.
 
 ---
 
 ## ✨ Key Features
 
-- **🛡️ Active Greenwashing Detection**: Identifies vague marketing buzzwords vs. verifiable evidence.
-- **🧵 Deep Material Analysis**: Tiers materials from "High" (sustainable) to "Low" (harmful) based on environmental impact.
-- **✅ Certification Verification**: Distinguishes between trusted 3rd-party audits (GOTS, Fair Trade) and brand-internal labels.
-- **💎 Glassmorphism UI**: A stunning, modern interface with animated score rings and micro-interactions.
-- **🔍 Platform Support**: High-fidelity extraction for Amazon, Walmart, Patagonia, H&M, Zara, Target, and more.
-- **🌊 Streaming Responses (Phase 7)**: Real-time analysis updates using Server-Sent Events (SSE) for zero-wait UX.
-- **🗄️ Brand Intelligence (Phase 6)**: Persistent brand profiles tracking overall ethical performance across multiple products.
-- **🔒 Privacy First**: Strips PII and tracking parameters automatically; uses one-way hashed anonymous identifiers.
-- **⏱️ Secure API**: In-memory rate limiting and optional API key validation for production deployments.
+- **🌐 Hybrid Truth Engine**: Cross-references AI extracted claims against 2M+ verified ESG data points from **WikiRate.org** (e.g., Fashion Transparency Index, GHG Emissions).
+- **🛡️ Active Deception Defense**: Automatically detects and penalizes Greenwashing. It flags vague terms like "eco-friendly" while recognizing legitimate "Organic" materials.
+- **🗣️ People-First Language**: Replaces complex auditor jargon with easy-to-understand explanations (e.g., *"Everything is made of chemicals, so calling this 'chemical-free' is misleading!"*).
+- **🧵 Deep Material Analysis**: High-fidelity scoring for 100+ materials based on lifecycle impact (Econyl, Lyocell, Organic vs. Virgin Cotton).
+- **✅ Gold-Standard Verification**: Distinguishes between trusted 3rd-party audits (GOTS, Fair Trade, OEKO-TEX) and brand-internal marketing labels.
+- **🌊 Streaming Responses**: Results "unfold" in real-time as the AI processes the page, providing instant feedback without the wait.
+- **🔒 Privacy-Focused**: Automatic PII stripping and anonymous hashed user identification to protect your data while you shop.
 
 ---
 

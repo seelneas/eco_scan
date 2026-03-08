@@ -59,21 +59,39 @@ def regex_prescan(raw_product_text: str) -> dict:
 def merge_buzzword_findings(
     regex_matches: list[dict],
     llm_buzzwords: list[VagueBuzzword],
+    materials: list,
 ) -> list[VagueBuzzword]:
     """
     Merge buzzwords found by regex with those found by the LLM.
-    The LLM may find context-dependent buzzwords that regex misses.
-    Regex may catch terms the LLM normalized away.
-    Returns a deduplicated, combined list.
+    Implements exceptions for legitimate uses of terms (e.g. Organic materials).
     """
-    # Start with LLM findings (they have richer context)
+    has_organic_material = any("organic" in m.name.lower() for m in materials)
+    
+    # Subjective terms to ignore (standard marketing, not greenwashing)
+    SUBJECTIVE_IGNORE = {
+        "soft", "softer", "ultra soft", "silky soft", 
+        "comfortable", "comfort", 
+        "stylish", "fashionable", 
+        "perfect fit", "best fit", 
+        "breathable", "cooler"
+    }
+
+    # Start with LLM findings
     merged = {bw.word.lower(): bw for bw in llm_buzzwords}
 
     # Add regex findings that the LLM missed
     for match in regex_matches:
         term_key = match["term"].lower()
+        
+        # Exception 1: Organic word used for Organic Material
+        if term_key == "organic" and has_organic_material:
+            continue
+            
+        # Exception 2: Filter out subjective/standard marketing fluff
+        if any(subj in term_key for subj in SUBJECTIVE_IGNORE):
+            continue
+
         if term_key not in merged:
-            # Convert regex match to VagueBuzzword schema
             risk = GreenwashingRisk.HIGH if match["risk_level"] == "high" else GreenwashingRisk.MEDIUM
             merged[term_key] = VagueBuzzword(
                 word=match["term"],
@@ -82,7 +100,17 @@ def merge_buzzword_findings(
                 greenwashing_risk=risk,
             )
 
-    return list(merged.values())
+    # Double check LLM findings for the same exceptions
+    final_list = []
+    for bw in merged.values():
+        word_low = bw.word.lower()
+        if word_low == "organic" and has_organic_material:
+            continue
+        if any(subj in word_low for subj in SUBJECTIVE_IGNORE):
+            continue
+        final_list.append(bw)
+
+    return final_list
 
 
 # ──────────────────────────────────────────
@@ -194,16 +222,16 @@ def calculate_enhanced_gwr(
     weighted_negatives = vague_count + (high_risk_vague * 0.5) + unsupported_count
     gwr_index = weighted_negatives / (total_evidence + 1)
 
-    # Logic-based level mapping
-    if gwr_index <= 0.5:
+    # Logic-based level mapping: More lenient thresholds for e-commerce reality
+    if gwr_index <= 1.0:
         risk_level = GWRLevel.LOW
         penalty = 0
-    elif gwr_index <= 1.5:
+    elif gwr_index <= 2.5:
         risk_level = GWRLevel.MEDIUM
-        penalty = 15
+        penalty = 10
     else:
         risk_level = GWRLevel.HIGH
-        penalty = 40
+        penalty = 25
 
     return GreenwashingReport(
         vague_claims_count=vague_count,
@@ -244,6 +272,7 @@ def run_greenwashing_detection(
     merged_buzzwords = merge_buzzword_findings(
         regex_matches=prescan["matches"],
         llm_buzzwords=llm_analysis.sustainability_claims.vague_buzzwords,
+        materials=llm_analysis.materials,
     )
 
     # Step 3: Verify claims against evidence

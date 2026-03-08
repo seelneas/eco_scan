@@ -125,7 +125,7 @@ async def analyze_product_streaming(
         # Stream from Gemini
         accumulated = ""
 
-        async for chunk in await client.aio.models.generate_content_stream(
+        async for chunk in client.aio.models.generate_content_stream(
             model=settings.LLM_MODEL,
             contents=user_message,
             config=types.GenerateContentConfig(

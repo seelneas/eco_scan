@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.1  # Low temp for consistent, factual extraction
     LLM_MAX_TOKENS: int = 4000
 
+    # --- External APIs ---
+    WIKIRATE_API_KEY: str = ""
+
     # --- Database ---
     DATABASE_URL: str = "sqlite:///./ecoscan.db"
 

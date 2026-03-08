@@ -19,23 +19,24 @@
   --eco-danger: #DC2626;
   --eco-danger-light: #F87171;
 
-  /* ── Surfaces (White Glassmorphism) ───── */
-  --surface-bg: #FFFFFF;
-  --surface-card: rgba(255, 255, 255, 0.70);
-  --surface-elevated: rgba(241, 245, 249, 0.60);
-  --surface-hover: rgba(241, 245, 249, 0.90);
+  /* ── Surfaces (Metallic White Glassmorphism) ───── */
+  --surface-bg: rgba(248, 250, 252, 0.70);
+  /* Brighter white for solid cards to pop on glass */
+  --surface-card: #FFFFFF;
+  --surface-elevated: rgba(255, 255, 255, 0.50);
+  --surface-hover: rgba(255, 255, 255, 1);
 
-  /* ── Text (Dark Contrast) ──────────────── */
-  --text-primary: #0F172A;
+  /* ── Text (Metallic Slate Contrast) ─────── */
+  --text-primary: #1E293B;
   --text-secondary: #475569;
-  --text-muted: #64748B;
+  --text-muted: #94A3B8;
   --text-inverse: #FFFFFF;
 
-  /* ── Glass ─────────────────────────────── */
+  /* ── Glass Spec ─────────────────────────── */
   --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(148, 163, 184, 0.20);
-  --glass-border-hover: rgba(148, 163, 184, 0.35);
-  --glass-blur: 24px;
+  --glass-border: rgba(255, 255, 255, 0.50);
+  --glass-border-metallic: rgba(255, 255, 255, 0.85);
+  --glass-blur: 32px;
 
   /* ── Spacing ───────────────────────────── */
   --sp-xs: 4px;
@@ -70,6 +71,8 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--surface-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   color: var(--text-primary);
   width: 390px;
   min-height: 180px;
@@ -78,6 +81,14 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Metallic Rim Effect */
+  border: 1px solid var(--glass-border);
+  border-radius: 0;
+  /* Let the extension container handle rounding if needed, or set a subtle radius */
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.8),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 /* Custom scrollbar */
@@ -170,6 +181,12 @@ body::-webkit-scrollbar-thumb:hover {
   letter-spacing: 0.03em;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .version-badge {
   font-size: 10px;
   font-weight: 600;
@@ -178,6 +195,29 @@ body::-webkit-scrollbar-thumb:hover {
   padding: 3px 8px;
   border-radius: var(--r-sm);
   border: 1px solid var(--glass-border);
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast) ease;
+  border-radius: var(--r-sm);
+}
+
+.close-button:hover {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+.close-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* ══════════════════════════════════════════
@@ -585,26 +625,28 @@ body::-webkit-scrollbar-thumb:hover {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 10px var(--sp-md);
+  padding: 14px var(--sp-md);
   background: var(--surface-card);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-md);
+  /* Pure white cards as per image */
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
   transition: all var(--duration-fast) ease;
   gap: 8px;
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .accordion-trigger:hover {
-  background: var(--surface-hover);
-  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  border-color: var(--eco-primary-light);
 }
 
 .accordion-trigger[aria-expanded="true"] {
-  border-radius: var(--r-md) var(--r-md) 0 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .accordion-label {
@@ -652,13 +694,15 @@ body::-webkit-scrollbar-thumb:hover {
   overflow: hidden;
   transition: max-height var(--duration-normal) var(--ease-out);
   background: var(--surface-card);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(226, 232, 240, 0.6);
   border-top: none;
-  border-radius: 0 0 var(--r-md) var(--r-md);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.04);
 }
 
 .accordion-panel.expanded {
   max-height: 1200px;
+  margin-bottom: 8px;
 }
 
 .accordion-panel>div {
@@ -676,15 +720,20 @@ body::-webkit-scrollbar-thumb:hover {
 
 .category-card {
   background: var(--surface-elevated);
-  border-radius: var(--r-sm);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
   padding: var(--sp-md);
-  transition: background var(--duration-fast) ease;
-  border: 1px solid transparent;
+  transition: all var(--duration-fast) ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .category-card:hover {
   background: var(--surface-hover);
-  border-color: var(--glass-border);
+  border-color: var(--eco-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .category-header {
@@ -949,13 +998,16 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .gwr-stat {
-  background: var(--surface-elevated);
-  border-radius: var(--r-sm);
-  padding: 10px 8px;
+  background: #FFFBEB;
+  /* Matches image yellow tint */
+  border: 1px solid #FEF3C7;
+  border-radius: 12px;
+  padding: 12px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  box-shadow: 0 4px 6px rgba(217, 119, 6, 0.04);
 }
 
 .gwr-stat-value {
@@ -1293,11 +1345,15 @@ body::-webkit-scrollbar-thumb:hover {
 
 .brand-stat-card {
   background: var(--surface-elevated);
-  padding: 10px;
-  border-radius: var(--r-sm);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  padding: 12px;
+  border-radius: var(--r-md);
   display: flex;
   flex-direction: column;
   gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
 .brand-stat-label {
@@ -1338,19 +1394,23 @@ body::-webkit-scrollbar-thumb:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
+  padding: 14px;
   background: var(--surface-elevated);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   border-radius: var(--r-md);
-  border: 1px solid transparent;
   transition: all var(--duration-fast) ease;
   cursor: pointer;
   text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .alternative-item:hover {
   background: var(--surface-hover);
   border-color: var(--eco-primary-light);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
 }
 
 .alt-header {

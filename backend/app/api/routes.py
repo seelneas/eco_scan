@@ -217,7 +217,7 @@ async def analyze_product(
         )
 
         # Step 3: Scoring Engine
-        scoring_result = compute_ecoscan_score(llm_result, raw_product_text=request.product_text)
+        scoring_result = await compute_ecoscan_score(llm_result, raw_product_text=request.product_text)
 
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -370,7 +370,7 @@ async def analyze_product_stream(
                 return
 
             # Score the analysis
-            scoring_result = compute_ecoscan_score(
+            scoring_result = await compute_ecoscan_score(
                 analysis_result, raw_product_text=request.product_text
             )
             duration_ms = int((time.time() - start_time) * 1000)

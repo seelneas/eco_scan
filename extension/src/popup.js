@@ -9,6 +9,7 @@
 // ──────────────────────────────────────────
 const scanBtn = document.getElementById("scan-btn");
 const retryBtn = document.getElementById("retry-btn");
+const closeBtn = document.getElementById("close-btn");
 const statusEl = document.getElementById("status");
 const loadingEl = document.getElementById("loading");
 const resultEl = document.getElementById("result");
@@ -692,4 +693,11 @@ feedbackSubmit.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
     initAccordions();
     showState("idle");
+
+    // Close button handler
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            window.close();
+        });
+    }
 });
